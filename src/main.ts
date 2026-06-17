@@ -43,7 +43,7 @@ async function main() {
   })
 
   try {
-    const model = await Live2DModel.from(MODEL_URL, { autoInteract: false })
+    const model = await Live2DModel.from(MODEL_URL, { autoHitTest: false, autoFocus: true })
     app.stage.addChild(model)
 
     // Scale and center

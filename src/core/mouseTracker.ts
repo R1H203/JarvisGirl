@@ -40,9 +40,7 @@ function onMouseMove(e: MouseEvent): void {
   _lastFocusTime = now
 
   // 1. 视线跟随 (pixi-live2d-display 原生 API)
-  try {
-    _model.focus(_mouseNX, _mouseNY)
-  } catch { /* 某些模型可能不支持 */ }
+  _model.focus(_mouseNX, _mouseNY)
 
   // 2. 广播鼠标位置事件（供其他模块消费）
   eventBus.emit('mouse:move', {
