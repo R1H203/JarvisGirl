@@ -12,6 +12,9 @@
 
 import { eventBus } from './eventBus'
 import { stateMachine, PetState } from './stateMachine'
+import { initExpressionPipeline, getCurrentEmotion, getCurrentAction } from './expressionPipeline'
+import { Emotion } from './emotion'
+import { Action } from './action'
 
 /** Dev 模式: 是否在 console 输出所有事件 */
 let devLogging = false
@@ -26,6 +29,9 @@ export function initRuntime(options?: { devLog?: boolean }): void {
   // 这里确保初始状态广播
   stateMachine.reset(PetState.Idle)
 
+  // 初始化 Expression Pipeline（状态→情绪→动作管道）
+  initExpressionPipeline()
+
   if (devLogging) {
     // 挂载全局事件日志
     eventBus.on('state:change', (e) => {
@@ -33,7 +39,7 @@ export function initRuntime(options?: { devLog?: boolean }): void {
     })
 
     // Log 常见业务事件
-    const logEvents = ['emotion', 'tts', 'motion', 'interaction', 'error'] as const
+    const logEvents = ['emotion', 'action', 'tts', 'interaction', 'error'] as const
     logEvents.forEach((event) => {
       eventBus.on(event, (payload) => {
         console.log(`[Runtime] 事件: ${event}`, payload)
@@ -50,6 +56,11 @@ export function initRuntime(options?: { devLog?: boolean }): void {
       eventBus,
       stateMachine,
       PetState,
+      Emotion,
+      Action,
+      getCurrentEmotion,
+      getCurrentAction,
+      dumpModelParams: undefined as (() => Record<string, number>) | undefined,
     }
   }
 }

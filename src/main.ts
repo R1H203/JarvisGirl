@@ -4,6 +4,8 @@ import { invoke } from '@tauri-apps/api/core'
 import { initRuntime } from './core/runtime'
 import { eventBus } from './core/eventBus'
 import { stateMachine, PetState } from './core/stateMachine'
+import { setLive2DModel, dumpModelParams } from './core/live2dDriver'
+import { triggerExpression } from './core/expressionPipeline'
 
 // Register Live2D ticker
 Live2DModel.registerTicker(Ticker)
@@ -13,15 +15,8 @@ const MODEL_URL =
   'https://cdn.jsdelivr.net/gh/Eikanya/Live2d-model/Live2D/Senko_Normals/senko.model3.json'
 
 async function main() {
-  // Initialize runtime core (EventBus + StateMachine)
+  // Initialize runtime core (EventBus + StateMachine + ExpressionPipeline)
   initRuntime({ devLog: true })
-
-  // Demo: 启动后 3 秒模拟进入 listening 状态
-  setTimeout(() => {
-    stateMachine.setState(PetState.Listening)
-    // 5 秒后回到 idle
-    setTimeout(() => stateMachine.setState(PetState.Idle), 5000)
-  }, 3000)
 
   // 监听 interaction 事件（仅演示日志，不改渲染）
   eventBus.on('interaction', (e) => {
@@ -56,6 +51,11 @@ async function main() {
     model.scale.set(Math.min(scaleX, scaleY))
     model.anchor.set(0.5, 1)
     model.position.set(app.screen.width / 2, app.screen.height)
+
+    // Register model with Live2D driver (emotion→parameter, action→motion)
+    setLive2DModel(model)
+    // Wire up debug dump to window
+    ;(window as any).__JARVIS_GIRL__.dumpModelParams = dumpModelParams
 
     // Enable interaction on the model
     model.eventMode = 'static'
