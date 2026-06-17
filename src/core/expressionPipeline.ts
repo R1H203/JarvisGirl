@@ -54,6 +54,31 @@ function applyEmotion(emotion: Emotion, reason: string): void {
   eventBus.emit('emotion', { emotion, reason })
 }
 
+/** 临时情绪覆盖（不改变记录的状态基线，但强制改变表情参数） */
+let _tempEmotionTimer: ReturnType<typeof setTimeout> | null = null
+function handleTempEmotion(payload: { emotion: string; duration: number }): void {
+  if (!payload?.emotion) return
+  const emotion = payload.emotion as Emotion
+  if (!Object.values(Emotion).includes(emotion)) return
+
+  // 清除之前的定时器
+  if (_tempEmotionTimer) clearTimeout(_tempEmotionTimer)
+
+  // 强制广播 emotion（跳过 _currentEmotion 去重，因为是临时覆盖）
+  console.log(`[ExpressionPipeline] 临时表情: ${emotion} (${payload.duration}ms)`)
+  eventBus.emit('emotion', { emotion, reason: 'temp', force: true })
+
+  // duration 后恢复状态基线表情
+  if (payload.duration > 0) {
+    _tempEmotionTimer = setTimeout(() => {
+      const baseEmotion = resolveEmotion(stateMachine.state)
+      console.log(`[ExpressionPipeline] 恢复基线表情: ${baseEmotion}`)
+      _currentEmotion = baseEmotion
+      eventBus.emit('emotion', { emotion: baseEmotion, reason: 'temp:restore', force: true })
+    }, payload.duration)
+  }
+}
+
 /** 应用动作：广播 action 事件 */
 function applyAction(action: Action, reason: string): void {
   if (action === _currentAction && action === Action.IdleBreathe) return
@@ -90,6 +115,9 @@ export function initExpressionPipeline(): void {
     const action = resolveAction(stateMachine.state, _currentEmotion)
     applyAction(action, `trigger:${payload.event}`)
   })
+
+  // 订阅临时情绪覆盖（click/proximity/window enter，不播 motion）
+  eventBus.on('emotion:temp', handleTempEmotion)
 
   // 启动空闲微表情
   scheduleIdleEmotionCheck()

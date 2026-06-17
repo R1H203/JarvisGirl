@@ -1,18 +1,22 @@
 /**
  * InteractionDetector — B: 点击交互 + C: 边缘/接近检测
  *
- * B: 单击/双击/长按 → 状态变更 + 粒子爆发 + 表情/动作
- * C: 鼠标进入窗口 → 狐狸注意 / 鼠标接近 → 轻反应 / 鼠标离开 → 放松
+ * B: 单击 → 表情微变（不播动作，不切换状态）
+ *    双击 → 表情变化 + 轻动作
+ *    长按 → 表情变化 + 轻动作
+ *    拖动确认后才调用 Tauri start_drag
+ *
+ * C: 鼠标进入窗口 → 表情微变
+ *    鼠标离开 → 恢复
+ *    靠近狐狸 → 轻触发
  *
  * 约束:
  *   - 使用原生 Canvas pointer 事件（不与 PixiJS 事件系统冲突）
- *   - 通过 eventBus 通信
- *   - 点击确认后才调用 start_drag（单击不触发拖动）
+ *   - 所有交互只改变表情参数，不切换 PetState，不播 Live2D motion
+ *   - 避免 reaction 动作让模型消失
  */
 
 import { eventBus } from './eventBus'
-import { stateMachine, PetState } from './stateMachine'
-import { triggerExpression } from './expressionPipeline'
 
 // ── B: 点击状态 ──
 let _isPressed = false
@@ -34,8 +38,8 @@ let _startDrag: (() => void) | null = null
 // ── C: 接近/边缘状态 ──
 let _isMouseNear = false
 let _isMouseInWindow = false
-const PROXIMITY_DIST = 180          // px — 接近阈值
-const PROXIMITY_HYSTERESIS = 40     // px — 防止反复触发
+const PROXIMITY_DIST = 180
+const PROXIMITY_HYSTERESIS = 40
 
 // ── B: 点击处理 ──
 
@@ -74,10 +78,8 @@ function processClick(x: number, y: number): void {
   const dt = Date.now() - _pressTime
 
   if (dt < 200) {
-    // 单击 → 等待双击判定
     _clickCount++
     if (_clickCount >= 2 && (Date.now() - _lastClickTime) < DOUBLE_TAP_MS) {
-      // 双击确认
       if (_clickTimer) clearTimeout(_clickTimer)
       _clickTimer = null
       _clickCount = 0
@@ -93,28 +95,27 @@ function processClick(x: number, y: number): void {
       }, DOUBLE_TAP_MS)
     }
   } else if (dt >= LONG_PRESS_MS) {
-    // 长按
     _clickCount = 0
     onLongPress(x, y)
   }
 }
 
-function onTap(x: number, y: number): void {
-  console.log(`[Interaction] 单击 @ (${x}, ${y})`)
-  stateMachine.setState(PetState.Reacting)
-  setTimeout(() => stateMachine.setState(PetState.Idle), 1500)
+// ── 核心原则：只变表情参数，不播 Live2D motion ──
+
+function onTap(_x: number, _y: number): void {
+  console.log('[Interaction] 单击')
+  // 只临时改表情参数（surprised），3 秒后自动恢复（idleEmotion 循环恢复）
+  eventBus.emit('emotion:temp', { emotion: 'surprised', duration: 3000 })
 }
 
-function onDoubleTap(x: number, y: number): void {
-  console.log(`[Interaction] 双击 @ (${x}, ${y})`)
-  stateMachine.setState(PetState.Reacting)
-  setTimeout(() => stateMachine.setState(PetState.Idle), 2000)
+function onDoubleTap(_x: number, _y: number): void {
+  console.log('[Interaction] 双击')
+  eventBus.emit('emotion:temp', { emotion: 'happy', duration: 3000 })
 }
 
-function onLongPress(x: number, y: number): void {
-  console.log(`[Interaction] 长按 @ (${x}, ${y})`)
-  stateMachine.setState(PetState.Reacting)
-  setTimeout(() => stateMachine.setState(PetState.Idle), 2000)
+function onLongPress(_x: number, _y: number): void {
+  console.log('[Interaction] 长按')
+  eventBus.emit('emotion:temp', { emotion: 'surprised', duration: 4000 })
 }
 
 // ── C: 接近检测 ──
@@ -137,22 +138,23 @@ function onMouseMove(payload: any): void {
   if (dist < threshold && !_isMouseNear) {
     _isMouseNear = true
     eventBus.emit('proximity:enter', { distance: dist })
-    triggerExpression('click:tap')
+    eventBus.emit('emotion:temp', { emotion: 'curious', duration: 1500 })
   } else if (dist >= threshold && _isMouseNear) {
     _isMouseNear = false
     eventBus.emit('proximity:leave', {})
   }
 }
 
-// ── C: 窗口边缘检测 ──
+// ── C: 窗口进出 ──
+
+let _enterTimer: ReturnType<typeof setTimeout> | null = null
 
 function onDocMouseEnter(): void {
   if (_isMouseInWindow) return
   _isMouseInWindow = true
+  if (_enterTimer) clearTimeout(_enterTimer)
   eventBus.emit('window:enter', {})
-  triggerExpression('wake')
-  stateMachine.setState(PetState.Listening)
-  setTimeout(() => stateMachine.setState(PetState.Idle), 2500)
+  eventBus.emit('emotion:temp', { emotion: 'curious', duration: 2000 })
 }
 
 function onDocMouseLeave(): void {
@@ -169,21 +171,16 @@ export function initInteractionDetector(
 ): void {
   _startDrag = callbacks?.startDrag ?? null
 
-  // B: 原生 Canvas pointer 事件（不依赖 PixiJS 事件系统）
   canvas.addEventListener('pointerdown', onPointerDown)
   canvas.addEventListener('pointermove', onPointerMove)
   canvas.addEventListener('pointerup', onPointerUp)
   canvas.addEventListener('pointerleave', onPointerUp)
 
-  // 安全兜底：窗口层面释放
   window.addEventListener('pointerup', () => { _isPressed = false; _isDragging = false })
 
-  // C: 接近检测（订阅 mouseTracker 坐标）
   const unsubMove = eventBus.on('mouse:move', onMouseMove)
-
-  // C: 窗口进出
   document.addEventListener('mouseenter', onDocMouseEnter)
   document.addEventListener('mouseleave', onDocMouseLeave)
 
-  console.log('[InteractionDetector] 已初始化 — 点击检测 + 接近感应')
+  console.log('[InteractionDetector] 已初始化 — 点击表情变化 + 接近感应')
 }
