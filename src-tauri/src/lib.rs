@@ -15,6 +15,14 @@ fn start_drag(window: tauri::Window) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn show_context_menu(app: tauri::AppHandle) -> Result<(), String> {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.hide();
+    }
+    Ok(())
+}
+
+#[tauri::command]
 fn toggle_penetration(state: tauri::State<'_, Mutex<AppState>>) -> Result<bool, String> {
     let mut app_state = state.lock().map_err(|e| e.to_string())?;
     app_state.penetration_enabled = !app_state.penetration_enabled;
@@ -43,16 +51,14 @@ fn config_save(config: serde_json::Value) -> Result<(), String> {
 }
 
 fn get_config_path() -> String {
-    // In dev mode, read from project root
     if cfg!(debug_assertions) {
         let mut path = std::env::current_dir().unwrap_or_default();
         path.push("config");
         path.push("config.json");
         path.to_string_lossy().to_string()
     } else {
-        // In production, bundled with the app
         let mut path = std::env::current_exe().unwrap_or_default();
-        path.pop(); // remove exe name
+        path.pop();
         path.push("..");
         path.push("config");
         path.push("config.json");
@@ -125,7 +131,6 @@ pub fn run() {
         .setup(|app| {
             create_tray(app)?;
 
-            // Position window on right side of screen
             if let Some(window) = app.get_webview_window("main") {
                 if let Some(monitor) = window.current_monitor().ok().flatten() {
                     let size = monitor.size();
@@ -142,6 +147,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             start_drag,
+            show_context_menu,
             toggle_penetration,
             config_get,
             config_get_path,
