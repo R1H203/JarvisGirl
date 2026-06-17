@@ -7,7 +7,6 @@ import { stateMachine, PetState } from './core/stateMachine'
 import { setLive2DModel, dumpModelParams } from './core/live2dDriver'
 import { startMouseTracking, setMouseTracking } from './core/mouseTracker'
 import { initInteractionDetector } from './core/interactionDetector'
-import { initParticleSystem } from './core/particleSystem'
 
 // Register Live2D ticker
 Live2DModel.registerTicker(Ticker)

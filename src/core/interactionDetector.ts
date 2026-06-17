@@ -103,21 +103,18 @@ function onTap(x: number, y: number): void {
   console.log(`[Interaction] 单击 @ (${x}, ${y})`)
   stateMachine.setState(PetState.Reacting)
   setTimeout(() => stateMachine.setState(PetState.Idle), 1500)
-  eventBus.emit('particle:burst', { type: 'sparkle', x, y, count: 8, emotion: 'surprised' })
 }
 
 function onDoubleTap(x: number, y: number): void {
   console.log(`[Interaction] 双击 @ (${x}, ${y})`)
   stateMachine.setState(PetState.Reacting)
   setTimeout(() => stateMachine.setState(PetState.Idle), 2000)
-  eventBus.emit('particle:burst', { type: 'heart', x, y, count: 15, emotion: 'happy' })
 }
 
 function onLongPress(x: number, y: number): void {
   console.log(`[Interaction] 长按 @ (${x}, ${y})`)
   stateMachine.setState(PetState.Reacting)
   setTimeout(() => stateMachine.setState(PetState.Idle), 2000)
-  eventBus.emit('particle:burst', { type: 'star', x, y, count: 12, emotion: 'surprised' })
 }
 
 // ── C: 接近检测 ──
