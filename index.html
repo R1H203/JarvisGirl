@@ -10,7 +10,16 @@
   <link rel="stylesheet" href="/src/styles.css" />
 </head>
 <body>
-  <div id="canvas"></div>
+  <!-- Layer 1: Glass Frame (subtle border) -->
+  <div id="ui-glass"></div>
+
+  <!-- Layer 3: Overlays (future React) -->
+  <div id="ui-overlay"></div>
+
+  <!-- Layer 4: Floating Panels (future) -->
+  <div id="ui-panels"></div>
+
+  <!-- PixiJS will inject canvas at z-index:2 -->
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

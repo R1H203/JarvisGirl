@@ -16,6 +16,7 @@ import { initExpressionPipeline, getCurrentEmotion, getCurrentAction } from './e
 import { Emotion } from './emotion'
 import { Action } from './action'
 import { setMouseTracking, getMousePosition } from './mouseTracker'
+import { getAvailableCharacters, getCurrentCharacter, registerCharacter } from './character'
 
 /** Dev 模式: 是否在 console 输出所有事件 */
 let devLogging = false
@@ -65,6 +66,10 @@ export function initRuntime(options?: { devLog?: boolean }): void {
       dumpModelParams: undefined as (() => Record<string, number>) | undefined,
       setMouseTracking,
       getMousePosition,
+      characterList: getAvailableCharacters,
+      setCharacter: undefined as ((id: string) => Promise<boolean>) | undefined,
+      getCharacter: getCurrentCharacter,
+      registerCharacter,
     }
   }
 }

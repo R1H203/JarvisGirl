@@ -96,3 +96,10 @@ export function setMouseTracking(enabled: boolean): void {
 export function getMousePosition(): { nx: number; ny: number } {
   return { nx: _mouseNX, ny: _mouseNY }
 }
+
+/** 停止鼠标追踪（切换角色时使用） */
+export function stopMouseTracking(): void {
+  window.removeEventListener('mousemove', onMouseMove)
+  window.removeEventListener('resize', onResize)
+  _model = null
+}

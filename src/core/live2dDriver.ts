@@ -136,7 +136,7 @@ const ACTION_MOTIONS: Partial<Record<Action, MotionMapping>> = {
 }
 
 /** 发现模型的所有参数 */
-function discoverParameters(model: Live2DModel): void {
+export function discoverParameters(model: Live2DModel): void {
   const coreModel = (model as any).internalModel?.coreModel
   if (!coreModel || typeof coreModel.getParameterCount !== 'function') {
     console.warn('[Live2DDriver] 无法访问 coreModel')
@@ -253,4 +253,15 @@ export function dumpModelParams(): Record<string, number> {
     } catch { /* skip */ }
   }
   return snap
+}
+
+/** 清理 Live2D 驱动（切换角色时使用） */
+export function clearLive2DModel(): void {
+  if (_unsubUpdate) {
+    _unsubUpdate()
+    _unsubUpdate = null
+  }
+  _model = null
+  PARAM_CACHE.clear()
+  PENDING_PARAMS.clear()
 }
