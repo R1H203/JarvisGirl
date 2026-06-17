@@ -6,6 +6,7 @@ import { eventBus } from './core/eventBus'
 import { stateMachine, PetState } from './core/stateMachine'
 import { setLive2DModel, dumpModelParams } from './core/live2dDriver'
 import { triggerExpression } from './core/expressionPipeline'
+import { startMouseTracking, setMouseTracking } from './core/mouseTracker'
 
 // Register Live2D ticker
 Live2DModel.registerTicker(Ticker)
@@ -54,6 +55,8 @@ async function main() {
 
     // Register model with Live2D driver (emotion→parameter, action→motion)
     setLive2DModel(model)
+    // Start mouse tracking (eye + head follow cursor)
+    startMouseTracking(model)
     // Wire up debug dump to window
     ;(window as any).__JARVIS_GIRL__.dumpModelParams = dumpModelParams
 

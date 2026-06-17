@@ -15,6 +15,7 @@ import { stateMachine, PetState } from './stateMachine'
 import { initExpressionPipeline, getCurrentEmotion, getCurrentAction } from './expressionPipeline'
 import { Emotion } from './emotion'
 import { Action } from './action'
+import { setMouseTracking, getMousePosition } from './mouseTracker'
 
 /** Dev 模式: 是否在 console 输出所有事件 */
 let devLogging = false
@@ -61,6 +62,8 @@ export function initRuntime(options?: { devLog?: boolean }): void {
       getCurrentEmotion,
       getCurrentAction,
       dumpModelParams: undefined as (() => Record<string, number>) | undefined,
+      setMouseTracking,
+      getMousePosition,
     }
   }
 }

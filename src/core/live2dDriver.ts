@@ -15,6 +15,7 @@ import { eventBus } from './eventBus'
 import { Emotion } from './emotion'
 import { Action } from './action'
 import { Live2DModel } from 'pixi-live2d-display'
+import type { MouseMovePayload } from './mouseTracker'
 
 /** 模型引用（由 main.ts 设置） */
 let _model: Live2DModel | null = null
@@ -216,6 +217,19 @@ async function playAction(action: Action): Promise<void> {
   }
 }
 
+/** 应用鼠标位置 → 头部角度（轻微跟随） */
+function applyMouseFollow(nx: number, ny: number): void {
+  if (!_model) return
+
+  const headAngleX = nx * 15  // -15 ~ 15 度
+  const headAngleY = ny * 8   // -8 ~ 8 度
+
+  const idxX = findParamIndex(_model, 'ParamAngleX')
+  const idxY = findParamIndex(_model, 'ParamAngleY')
+  if (idxX >= 0) setParamByIndex(_model, idxX, headAngleX)
+  if (idxY >= 0) setParamByIndex(_model, idxY, headAngleY)
+}
+
 /** 设置模型引用 */
 export function setLive2DModel(model: Live2DModel): void {
   _model = model
@@ -239,12 +253,20 @@ export function setLive2DModel(model: Live2DModel): void {
     }
   })
 
-  console.log('[Live2DDriver] 已订阅 emotion/action 事件')
+  // 订阅鼠标移动 → 头部跟随
+  const unsubMouse = eventBus.on<MouseMovePayload>('mouse:move', (payload) => {
+    if (payload) {
+      applyMouseFollow(payload.nx, payload.ny)
+    }
+  })
+
+  console.log('[Live2DDriver] 已订阅 emotion/action/mouse:move 事件')
 
   // 返回取消订阅函数（供清理使用）
   return () => {
     unsubEmotion()
     unsubAction()
+    unsubMouse()
     _model = null
   }
 }
