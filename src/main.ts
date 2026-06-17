@@ -2,7 +2,6 @@ import { Application, Ticker } from 'pixi.js'
 import { Live2DModel } from 'pixi-live2d-display'
 import { invoke } from '@tauri-apps/api/core'
 import { initRuntime } from './core/runtime'
-import { eventBus } from './core/eventBus'
 import { initInteractionDetector } from './core/interactionDetector'
 import { initCharacterSystem } from './core/character'
 
@@ -39,10 +38,9 @@ async function main() {
   // Handles full lifecycle: load → register drivers → mouse tracking
   initCharacterSystem(app, canvas)
 
-  // Step 6: Right-click context menu (canvas native event)
+  // Step 6: Right-click — prevent browser context menu only
   canvas.addEventListener('contextmenu', (e) => {
     e.preventDefault()
-    invoke('show_context_menu')
   })
 
   // Step 7: Window resize → reposition model

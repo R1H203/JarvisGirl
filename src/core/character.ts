@@ -152,16 +152,9 @@ export async function setCharacter(id: string): Promise<boolean> {
     // 8. 注册鼠标追踪（Cubism 3 支持 focus，Cubism 2 会静默失效）
     startMouseTracking(model)
 
-    // 9. 右键菜单（注册到 canvas）
-    if (_canvas) {
-      // 移除旧的监听再添加
-      _canvas.removeEventListener('contextmenu', onContextMenu)
-      _canvas.addEventListener('contextmenu', onContextMenu)
-    }
-
     _currentId = id
 
-    // 10. 触发 character:change 事件
+    // 9. 触发 character:change 事件
     const { eventBus } = await import('./eventBus')
     eventBus.emit('character:change', { id, name: config.name, type: config.type })
 
@@ -174,15 +167,6 @@ export async function setCharacter(id: string): Promise<boolean> {
     _swapGuard = false
     return false
   }
-}
-
-/** 右键菜单处理器 */
-function onContextMenu(e: Event): void {
-  e.preventDefault()
-  // 动态 import invoke 避免循环依赖
-  import('@tauri-apps/api/core').then(({ invoke }) => {
-    invoke('show_context_menu')
-  }).catch(() => {})
 }
 
 /** 初始化角色系统（启动时调用） */
