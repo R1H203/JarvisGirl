@@ -79,13 +79,16 @@ export function initExpressionPipeline(): void {
   // 订阅状态变更
   eventBus.on('state:change', handleStateChange)
 
-  // 订阅外部事件（可触发情绪临时覆盖）
+  // 订阅外部事件（可触发情绪临时覆盖 + 动作）
   eventBus.on('user:trigger', (payload: any) => {
     if (!payload?.event) return
     const emotion = resolveEmotion(stateMachine.state, payload.event)
     if (emotion !== _currentEmotion) {
       applyEmotion(emotion, `trigger:${payload.event}`)
     }
+    // 同时更新动作（即使情绪没变）
+    const action = resolveAction(stateMachine.state, _currentEmotion)
+    applyAction(action, `trigger:${payload.event}`)
   })
 
   // 启动空闲微表情

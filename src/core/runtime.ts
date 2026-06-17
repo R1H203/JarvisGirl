@@ -16,6 +16,7 @@ import { initExpressionPipeline, getCurrentEmotion, getCurrentAction } from './e
 import { Emotion } from './emotion'
 import { Action } from './action'
 import { setMouseTracking, getMousePosition } from './mouseTracker'
+import { initParticleSystem } from './particleSystem'
 
 /** Dev 模式: 是否在 console 输出所有事件 */
 let devLogging = false
@@ -32,6 +33,9 @@ export function initRuntime(options?: { devLog?: boolean }): void {
 
   // 初始化 Expression Pipeline（状态→情绪→动作管道）
   initExpressionPipeline()
+
+  // 初始化粒子系统（Canvas 覆盖层，事件驱动）
+  initParticleSystem()
 
   if (devLogging) {
     // 挂载全局事件日志

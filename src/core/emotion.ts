@@ -36,6 +36,9 @@ export const EVENT_EMOTION: Record<string, Emotion> = {
   'error:unknown': Emotion.Angry,
   'wake': Emotion.Neutral,
   'sleep': Emotion.Sleepy,
+  'click:tap': Emotion.Surprised,
+  'click:double': Emotion.Happy,
+  'click:long': Emotion.Happy,
 }
 
 /** 情绪权重分布（用于空闲时随机微表情） */

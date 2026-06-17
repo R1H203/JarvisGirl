@@ -5,8 +5,9 @@ import { initRuntime } from './core/runtime'
 import { eventBus } from './core/eventBus'
 import { stateMachine, PetState } from './core/stateMachine'
 import { setLive2DModel, dumpModelParams } from './core/live2dDriver'
-import { triggerExpression } from './core/expressionPipeline'
 import { startMouseTracking, setMouseTracking } from './core/mouseTracker'
+import { initInteractionDetector } from './core/interactionDetector'
+import { initParticleSystem } from './core/particleSystem'
 
 // Register Live2D ticker
 Live2DModel.registerTicker(Ticker)
@@ -16,15 +17,10 @@ const MODEL_URL =
   'https://cdn.jsdelivr.net/gh/Eikanya/Live2d-model/Live2D/Senko_Normals/senko.model3.json'
 
 async function main() {
-  // Initialize runtime core (EventBus + StateMachine + ExpressionPipeline)
+  // Initialize runtime core (EventBus + StateMachine + ExpressionPipeline + ParticleSystem)
   initRuntime({ devLog: true })
 
-  // 监听 interaction 事件（仅演示日志，不改渲染）
-  eventBus.on('interaction', (e) => {
-    console.log(`[交互] type=${e?.type}, x=${e?.x}, y=${e?.y}`)
-  })
-
-  // Create a canvas element and append it
+  // Create canvas for PixiJS rendering
   const canvas = document.createElement('canvas')
   canvas.style.position = 'absolute'
   canvas.style.top = '0'
@@ -33,13 +29,19 @@ async function main() {
   canvas.style.height = '100%'
   document.body.appendChild(canvas)
 
+  // Initialize interaction detector (click detection + proximity)
+  // Must be called after canvas is in DOM for pointer events
+  initInteractionDetector(canvas, {
+    startDrag: () => invoke('start_drag'),
+  })
+
   const app = new Application({
     view: canvas,
     resizeTo: window,
     backgroundAlpha: 0,
     antialias: true,
     resolution: window.devicePixelRatio || 1,
-    autoDensity: true
+    autoDensity: true,
   })
 
   try {
@@ -60,19 +62,12 @@ async function main() {
     // Wire up debug dump to window
     ;(window as any).__JARVIS_GIRL__.dumpModelParams = dumpModelParams
 
-    // Enable interaction on the model
+    // Enable interaction on the model (for PixiJS pointer events)
     model.eventMode = 'static'
     model.cursor = 'grab'
 
-    // Drag window — PixiJS v7 uses FederatedPointerEvent (e.button directly)
-    model.on('pointerdown', (e) => {
-      if (e.button === 0) {
-        invoke('start_drag')
-      }
-    })
-
-    // Right-click context menu
-    app.view.addEventListener('contextmenu', (e) => {
+    // Right-click context menu (handle via native canvas event for reliability)
+    canvas.addEventListener('contextmenu', (e) => {
       e.preventDefault()
       invoke('show_context_menu')
     })
@@ -87,7 +82,6 @@ async function main() {
       ctx.textAlign = 'center'
       ctx.fillText('🦊', canvas.width / 2 / (window.devicePixelRatio || 1),
         canvas.height / 2 / (window.devicePixelRatio || 1))
-      // Error message
       ctx.fillStyle = '#999'
       ctx.font = '14px sans-serif'
       ctx.fillText('Loading fox...', canvas.width / 2 / (window.devicePixelRatio || 1),
