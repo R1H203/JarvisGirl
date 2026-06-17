@@ -1,0 +1,59 @@
+{
+  "character": {
+    "directory": "default",
+    "size": 0.6,
+    "anchorX": 0.5,
+    "anchorY": 1.0
+  },
+  "glass": {
+    "opacity": 0.2,
+    "blur": 20,
+    "height": 20,
+    "widthRatio": 0.7,
+    "borderRadius": 9999
+  },
+  "shadow": {
+    "opacity": 0.15,
+    "blur": 30,
+    "offsetY": 8,
+    "color": "hsl(0, 0%, 20%)"
+  },
+  "ambientLight": {
+    "brightness": 0.08,
+    "hue": 210,
+    "saturation": 30,
+    "blur": 50
+  },
+  "breath": {
+    "amplitude": 3,
+    "cycleMs": 4000,
+    "scaleMax": 1.015,
+    "easing": "ease-in-out"
+  },
+  "blink": {
+    "minIntervalMs": 3000,
+    "maxIntervalMs": 8000,
+    "durationMs": 150
+  },
+  "particles": {
+    "maxCount": 8,
+    "enabledTypes": ["star", "heart", "bubble", "light"],
+    "spawnOnClick": 5,
+    "spawnOnHappy": 3,
+    "spawnOnAiReply": 6,
+    "spawnOnHover": 2,
+    "fadeDurationMs": 1500
+  },
+  "performance": {
+    "activeFps": 60,
+    "idleFps": 20,
+    "sleepFps": 10,
+    "idleTimeoutMs": 30000,
+    "particleFps": 30
+  },
+  "debug": {
+    "showFps": false,
+    "showHitbox": false,
+    "showState": false
+  }
+}
